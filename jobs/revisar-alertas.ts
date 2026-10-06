@@ -11,7 +11,15 @@ import type {
   EventosAlertaRepository,
 } from "@/repositories/inversionesRepository";
 import { config } from "@/lib/config";
+import {
+  ActivosMemoryRepository,
+  AlertasMemoryRepository,
+  EstadoAlertaMemoryRepository,
+  EventosAlertaMemoryRepository,
+} from "@/repositories/memoriaRepository";
+import { NotificadorTelegram } from "@/services/notificaciones/notificadorTelegram";
 import type { ProveedorPrecios } from "@/services/precios/ProveedorPrecios";
+import { servicioPrecios } from "@/services/precios/servicioPrecios";
 import type { Notificador } from "@/services/notificaciones/Notificador";
 
 export interface RevisarAlertasDeps {
@@ -118,15 +126,6 @@ export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alerta
 }
 
 if (process.argv[1]?.endsWith("revisar-alertas.ts") ?? false) {
-  const { servicioPrecios } = await import("@/services/precios/servicioPrecios");
-  const { NotificadorTelegram } = await import("@/services/notificaciones/notificadorTelegram");
-  const {
-    ActivosMemoryRepository,
-    AlertasMemoryRepository,
-    EstadoAlertaMemoryRepository,
-    EventosAlertaMemoryRepository,
-  } = await import("@/repositories/memoriaRepository");
-
   const deps: RevisarAlertasDeps = {
     activos: new ActivosMemoryRepository(),
     alertas: new AlertasMemoryRepository(),
