@@ -50,6 +50,7 @@ describe("job: revisión de alertas", () => {
       estado: estadoRepo,
       proveedorPrecios: new ProveedorFalso(),
       notificador: new NotificadorFalso(),
+      persistirEstado: false,
     });
 
     expect(resultado.alertasRevisadas).toBe(1);
@@ -61,5 +62,56 @@ describe("job: revisión de alertas", () => {
     const estado = await estadoRepo.obtenerEstado(alerta.id);
     expect(estado?.ultimoPrecio).toBe(210);
     expect(estado?.condicionCumplida).toBe(true);
+  });
+
+  it("envía una notificación cuando el precio cruza el objetivo", async () => {
+    const activosRepo = new ActivosMemoryRepository();
+    const alertasRepo = new AlertasMemoryRepository();
+    const eventosRepo = new EventosAlertaMemoryRepository();
+    const estadoRepo = new EstadoAlertaMemoryRepository();
+    const mensajes: string[] = [];
+
+    const activo: Activo = {
+      id: "nvda",
+      nombre: "NVIDIA",
+      simbolo: "NVDA",
+      tipo: "accion",
+    };
+
+    const alerta: Alerta = {
+      id: "alerta-cruce",
+      activoId: "nvda",
+      condicion: "menor_igual",
+      precioObjetivo: 210,
+      activa: true,
+    };
+
+    await activosRepo.guardarActivo(activo);
+    await alertasRepo.guardarAlerta(alerta);
+
+    const resultado = await revisarAlertas({
+      activos: activosRepo,
+      alertas: alertasRepo,
+      eventos: eventosRepo,
+      estado: estadoRepo,
+      proveedorPrecios: new ProveedorFalso(),
+      notificador: {
+        async enviar(mensaje: string): Promise<void> {
+          mensajes.push(mensaje);
+        },
+      },
+      estadoInicial: [{
+        alertaId: alerta.id,
+        ultimoPrecio: 211,
+        condicionCumplida: false,
+      }],
+      persistirEstado: false,
+    });
+
+    expect(resultado.disparadas).toBe(1);
+    expect(mensajes).toEqual([
+      "NVIDIA (NVDA) activó la alerta menor_igual 210. Precio actual: 210.",
+    ]);
+    expect(await eventosRepo.obtenerEventos()).toHaveLength(1);
   });
 });

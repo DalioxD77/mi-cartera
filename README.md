@@ -48,7 +48,9 @@ Importante: nunca se exponen secretos al frontend; solo se usan variables del se
 5. En **Actions**, ejecuta el workflow **Probar Telegram** con **Run workflow**. Si la configuración es correcta, recibirás un mensaje de prueba del bot.
 6. Para desarrollo local, copia `.env.example` como `.env.local` y completa esas dos variables. No subas `.env.local` a Git. Next.js carga ese archivo al ejecutar la app; los comandos de `jobs` ejecutados directamente necesitan recibir las variables en el entorno de la terminal.
 
-El job de revisión usa Telegram al encontrar una alerta disparada. Actualmente los repositorios de alertas y activos del job están en memoria, mientras que la interfaz todavía no guarda alertas; por eso configurar el bot no basta para recibir alertas creadas en la aplicación. La prueba manual confirma que el bot puede enviarte mensajes; la persistencia y conexión de las alertas de la aplicación quedan pendientes.
+Para ver el flujo de alerta completo, ejecuta **Actions → Demostración alerta Telegram → Run workflow**. Envía una alerta de ejemplo usando precios simulados (no precios de mercado) y no modifica el estado persistido del job.
+
+El job periódico está preparado para usar Telegram al encontrar una alerta disparada. Actualmente sus repositorios de alertas y activos están en memoria, mientras que la interfaz todavía no guarda alertas; por eso la demostración no representa una alerta real creada en la aplicación. La persistencia y conexión de las alertas reales quedan pendientes.
 
 ## Cómo correr las pruebas
 

@@ -21,6 +21,8 @@ export interface RevisarAlertasDeps {
   estado: EstadoAlertaRepository;
   proveedorPrecios: ProveedorPrecios;
   notificador: Notificador;
+  estadoInicial?: EstadoAlerta[];
+  persistirEstado?: boolean;
 }
 
 // El archivo JSON actúa como estado temporal; luego se migrará a Supabase o una BD real.
@@ -61,7 +63,7 @@ function construirMensaje(alerta: Alerta, activo: Activo, precio: number): strin
 export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alertasRevisadas: number; disparadas: number }> {
   const alertasActivas = await deps.alertas.obtenerAlertasActivas();
   const activos = await deps.activos.obtenerActivos();
-  const estadoPersistente = leerEstadoPersistente();
+  const estadoPersistente = deps.estadoInicial ?? leerEstadoPersistente();
   let disparadas = 0;
 
   for (const alerta of alertasActivas) {
@@ -104,7 +106,9 @@ export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alerta
 
     const sinDuplicados = estadoPersistente.filter((item) => item.alertaId !== alerta.id);
     sinDuplicados.push(siguienteEstado);
-    guardarEstadoPersistente(sinDuplicados);
+    if (deps.persistirEstado !== false) {
+      guardarEstadoPersistente(sinDuplicados);
+    }
   }
 
   return {
