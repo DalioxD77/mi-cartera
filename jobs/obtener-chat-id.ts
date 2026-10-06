@@ -13,13 +13,33 @@ interface ActualizacionesTelegram {
   }>;
 }
 
+interface IdentidadTelegram {
+  ok: boolean;
+  description?: string;
+  result?: {
+    username?: string;
+  };
+}
+
 async function obtenerChatId(): Promise<void> {
   if (!config.telegramBotToken) {
     throw new Error("Falta TELEGRAM_BOT_TOKEN en las variables de entorno.");
   }
 
+  const respuestaIdentidad = await fetch(
+    `https://api.telegram.org/bot${config.telegramBotToken}/getMe`,
+  );
+  const identidad = (await respuestaIdentidad.json()) as IdentidadTelegram;
+
+  if (!respuestaIdentidad.ok || !identidad.ok) {
+    throw new Error(`Telegram no aceptó el token: ${identidad.description ?? respuestaIdentidad.statusText}`);
+  }
+
+  console.log(`Bot conectado: @${identidad.result?.username ?? "usuario desconocido"}`);
+  console.log("Esperando hasta 30 segundos un mensaje nuevo del chat...");
+
   const response = await fetch(
-    `https://api.telegram.org/bot${config.telegramBotToken}/getUpdates`,
+    `https://api.telegram.org/bot${config.telegramBotToken}/getUpdates?timeout=30`,
   );
   const resultado = (await response.json()) as ActualizacionesTelegram;
 
