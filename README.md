@@ -43,8 +43,10 @@ Importante: nunca se exponen secretos al frontend; solo se usan variables del se
 
 1. Crea un bot con [@BotFather](https://t.me/BotFather), abre el chat con tu bot y envíale `/start`.
 2. Agrega el token de BotFather y el ID numérico de ese chat como secretos del repositorio en **Settings → Secrets and variables → Actions → New repository secret**. Usa exactamente los nombres `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`. Nunca compartas ni publiques el token.
-3. En **Actions**, ejecuta el workflow **Probar Telegram** con **Run workflow**. Si la configuración es correcta, recibirás un mensaje de prueba del bot.
-4. Para desarrollo local, copia `.env.example` como `.env.local` y completa esas dos variables. No subas `.env.local` a Git. Next.js carga ese archivo al ejecutar la app; los comandos de `jobs` ejecutados directamente necesitan recibir las variables en el entorno de la terminal.
+3. Envíale un mensaje al bot. En **Actions**, ejecuta el workflow **Obtener chat ID** con **Run workflow** y copia el ID numérico que aparece en los registros de esa ejecución.
+4. Agrega ese ID como otro secreto del repositorio, llamado `TELEGRAM_CHAT_ID`.
+5. En **Actions**, ejecuta el workflow **Probar Telegram** con **Run workflow**. Si la configuración es correcta, recibirás un mensaje de prueba del bot.
+6. Para desarrollo local, copia `.env.example` como `.env.local` y completa esas dos variables. No subas `.env.local` a Git. Next.js carga ese archivo al ejecutar la app; los comandos de `jobs` ejecutados directamente necesitan recibir las variables en el entorno de la terminal.
 
 El job de revisión usa Telegram al encontrar una alerta disparada. Actualmente los repositorios de alertas y activos del job están en memoria, mientras que la interfaz todavía no guarda alertas; por eso configurar el bot no basta para recibir alertas creadas en la aplicación. La prueba manual confirma que el bot puede enviarte mensajes; la persistencia y conexión de las alertas de la aplicación quedan pendientes.
 

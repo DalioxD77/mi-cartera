@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "job:alertas": "tsx jobs/revisar-alertas.ts",
+    "telegram:chat-id": "tsx jobs/obtener-chat-id.ts",
     "telegram:test": "tsx jobs/probar-telegram.ts"
   },
   "dependencies": {

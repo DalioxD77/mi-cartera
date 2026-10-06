@@ -1,0 +1,25 @@
+name: Obtener chat ID
+
+on:
+  workflow_dispatch:
+
+jobs:
+  obtener-chat-id:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Consultar mensajes recientes del bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: npm run telegram:chat-id
