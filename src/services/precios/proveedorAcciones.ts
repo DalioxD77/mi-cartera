@@ -1,13 +1,8 @@
 import type { ProveedorPrecios } from "@/services/precios/ProveedorPrecios";
-import { config } from "@/lib/config";
 
 export class ProveedorAcciones implements ProveedorPrecios {
   async obtenerPrecio(simbolo: string): Promise<number> {
-    if (!config.priceApiKey) {
-      throw new Error("no configurado");
-    }
-
-    // TODO: integrar una fuente de precios para acciones reales y manejar errores controlados.
+    // TODO: migrar a una fuente de precios de acciones estable y documentada.
     const response = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${simbolo.toUpperCase()}?interval=1d&range=1mo`,
       {

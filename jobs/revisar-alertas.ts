@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import path from "path";
+import { createClient } from "@supabase/supabase-js";
 
 import { evaluarCondicion } from "@/domain/reglasAlertas";
 import type { Activo, Alerta, EstadoAlerta, EventoAlerta } from "@/domain/tipos";
@@ -12,12 +13,14 @@ import type {
 } from "@/repositories/inversionesRepository";
 import { config } from "@/lib/config";
 import {
-  ActivosMemoryRepository,
-  AlertasMemoryRepository,
-  EstadoAlertaMemoryRepository,
-  EventosAlertaMemoryRepository,
-} from "@/repositories/memoriaRepository";
-import { NotificadorTelegram } from "@/services/notificaciones/notificadorTelegram";
+  SupabaseActivosRepository,
+  SupabaseAlertasRepository,
+  SupabaseEstadoAlertaRepository,
+  SupabaseEventosAlertaRepository,
+} from "@/repositories/supabaseAlertasRepository";
+import {
+  NotificadorTelegram,
+} from "@/services/notificaciones/notificadorTelegram";
 import type { ProveedorPrecios } from "@/services/precios/ProveedorPrecios";
 import { servicioPrecios } from "@/services/precios/servicioPrecios";
 import type { Notificador } from "@/services/notificaciones/Notificador";
@@ -33,7 +36,7 @@ export interface RevisarAlertasDeps {
   persistirEstado?: boolean;
 }
 
-// El archivo JSON actúa como estado temporal; luego se migrará a Supabase o una BD real.
+// El archivo JSON conserva estado en modo local; el workflow usa estado compartido en Supabase.
 function asegurarArchivoEstado(): string {
   const dir = path.dirname(config.alertStateFilePath);
 
@@ -82,7 +85,9 @@ export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alerta
     }
 
     const precioActual = await deps.proveedorPrecios.obtenerPrecio(activo.simbolo, activo.tipo);
-    const estadoPrevio = estadoPersistente.find((item) => item.alertaId === alerta.id);
+    const estadoPrevio =
+      estadoPersistente.find((item) => item.alertaId === alerta.id) ??
+      await deps.estado.obtenerEstado(alerta.id);
     const precioAnterior = estadoPrevio?.ultimoPrecio;
     const condicionAnterior = precioAnterior !== undefined ? evaluarCondicion(alerta, precioAnterior) : false;
     const condicionActual = evaluarCondicion(alerta, precioActual);
@@ -126,13 +131,26 @@ export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alerta
 }
 
 if (process.argv[1]?.endsWith("revisar-alertas.ts") ?? false) {
+  if (!config.supabaseUrl || !config.supabaseServiceRoleKey || !config.supabaseOwnerId) {
+    throw new Error("Faltan SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY o SUPABASE_OWNER_ID en el entorno.");
+  }
+
+  const supabase = createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
   const deps: RevisarAlertasDeps = {
-    activos: new ActivosMemoryRepository(),
-    alertas: new AlertasMemoryRepository(),
-    eventos: new EventosAlertaMemoryRepository(),
-    estado: new EstadoAlertaMemoryRepository(),
+    activos: new SupabaseActivosRepository(supabase, config.supabaseOwnerId),
+    alertas: new SupabaseAlertasRepository(supabase, config.supabaseOwnerId),
+    eventos: new SupabaseEventosAlertaRepository(supabase, config.supabaseOwnerId),
+    estado: new SupabaseEstadoAlertaRepository(supabase, config.supabaseOwnerId),
     proveedorPrecios: servicioPrecios,
     notificador: new NotificadorTelegram(),
+    estadoInicial: [],
+    persistirEstado: false,
   };
 
   revisarAlertas(deps)

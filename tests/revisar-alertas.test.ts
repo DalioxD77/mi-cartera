@@ -88,6 +88,11 @@ describe("job: revisión de alertas", () => {
 
     await activosRepo.guardarActivo(activo);
     await alertasRepo.guardarAlerta(alerta);
+    await estadoRepo.guardarEstado({
+      alertaId: alerta.id,
+      ultimoPrecio: 211,
+      condicionCumplida: false,
+    });
 
     const resultado = await revisarAlertas({
       activos: activosRepo,
@@ -100,11 +105,6 @@ describe("job: revisión de alertas", () => {
           mensajes.push(mensaje);
         },
       },
-      estadoInicial: [{
-        alertaId: alerta.id,
-        ultimoPrecio: 211,
-        condicionCumplida: false,
-      }],
       persistirEstado: false,
     });
 

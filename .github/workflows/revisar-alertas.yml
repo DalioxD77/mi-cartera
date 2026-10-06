@@ -23,9 +23,11 @@ jobs:
 
       - name: Ejecutar job de alertas
         env:
-          PRICE_API_KEY: ${{ secrets.PRICE_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_OWNER_ID: ${{ secrets.SUPABASE_OWNER_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: npm run job:alertas
 
-# El estado persistente real necesitará una base de datos en producción; este archivo solo deja preparado el flujo automatizado.
+# Los secretos de Supabase y Telegram se configuran en Settings > Secrets and variables > Actions.
