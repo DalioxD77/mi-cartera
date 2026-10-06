@@ -22,9 +22,10 @@ export class NotificadorTelegram implements Notificador {
       },
     );
 
-    if (!response.ok) {
-      const detalle = await response.text();
-      throw new Error(`Telegram falló: ${detalle}`);
+    const resultado = (await response.json()) as { ok?: boolean; description?: string };
+
+    if (!response.ok || !resultado.ok) {
+      throw new Error(`Telegram falló: ${resultado.description ?? response.statusText}`);
     }
   }
 }

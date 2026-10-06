@@ -115,7 +115,7 @@ export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alerta
 
 if (process.argv[1]?.endsWith("revisar-alertas.ts") ?? false) {
   const { servicioPrecios } = await import("@/services/precios/servicioPrecios");
-  const { NotificadorConsola } = await import("@/services/notificaciones/notificadorConsola");
+  const { NotificadorTelegram } = await import("@/services/notificaciones/notificadorTelegram");
   const {
     ActivosMemoryRepository,
     AlertasMemoryRepository,
@@ -129,7 +129,7 @@ if (process.argv[1]?.endsWith("revisar-alertas.ts") ?? false) {
     eventos: new EventosAlertaMemoryRepository(),
     estado: new EstadoAlertaMemoryRepository(),
     proveedorPrecios: servicioPrecios,
-    notificador: new NotificadorConsola(),
+    notificador: new NotificadorTelegram(),
   };
 
   revisarAlertas(deps)

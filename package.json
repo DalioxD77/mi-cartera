@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
-    "job:alertas": "tsx jobs/revisar-alertas.ts"
+    "job:alertas": "tsx jobs/revisar-alertas.ts",
+    "telegram:test": "tsx jobs/probar-telegram.ts"
   },
   "dependencies": {
     "next": "16.4.0",
