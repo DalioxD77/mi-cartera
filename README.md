@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mi Cartera
 
-## Getting Started
+Mi Cartera es una app personal de seguimiento de inversiones para acciones y criptomonedas. Está pensada como una herramienta de aprendizaje y análisis, no como asesoría financiera ni como promesa de ganancias.
 
-First, run the development server:
+## Qué incluye
+
+- App en Next.js con App Router y TypeScript.
+- Lógica de negocio separada en `src/domain`.
+- Repositorios para compra, activos, alertas y eventos.
+- Proveedores de precios con caché y validación.
+- Ruta interna `GET /api/precios` para consultar símbolos del servidor.
+- Job de alertas con revisión periódica.
+- Ejemplos de pruebas con Vitest.
+
+## Instalación
+
+1. Clona el proyecto.
+2. Copia `.env.example` a `.env.local` y completa los valores requeridos.
+3. Ejecuta:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables de entorno
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+El archivo `.env.example` incluye la configuración mínima:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+PRICE_API_KEY=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+PRECIOS_CACHE_TTL_MS=60000
+MAX_SIMBOLOS=10
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX_REQUESTS=30
+```
 
-## Learn More
+Importante: nunca se exponen secretos al frontend; solo se usan variables del servidor (sin prefijo `NEXT_PUBLIC_`).
 
-To learn more about Next.js, take a look at the following resources:
+## Cómo correr las pruebas
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm test
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Cómo ejecutar el job de alertas
 
-## Deploy on Vercel
+```bash
+npm run job:alertas
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Arquitectura por capas
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app`: rutas y páginas de la app.
+- `src/components`: placeholders para componentes futuros.
+- `src/domain`: tipos, cálculos, reglas de alertas y backtesting.
+- `src/repositories`: contratos y implementaciones en memoria y localStorage.
+- `src/services/precios`: proveedores, caché y servicio central.
+- `src/services/notificaciones`: notificaciones a consola o Telegram.
+- `src/lib`: configuración centralizada de entorno.
+- `jobs`: job automatizado de revisión de alertas.
+- `tests`: pruebas unitarias y del job.
+
+## Hoja de ruta
+
+- Dashboard con datos simulados.
+- Formulario de compras y edición.
+- Gráficos de rendimiento y cartera.
+- Alertas en la interfaz.
+- Telegram real y automatización.
+- Supabase para persistencia real.
+- Backtesting más formal.
+
+## Importante
+
+La app solo ofrece seguimiento y aprendizaje. Nunca promete ganancias, no recomienda inversiones personalizadas ni ejecuta compras automáticamente.
