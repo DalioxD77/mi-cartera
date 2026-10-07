@@ -4,26 +4,22 @@ import { revisarAlertas } from "../jobs/revisar-alertas";
 import type { Activo, Alerta } from "@/domain/tipos";
 import { ActivosMemoryRepository, AlertasMemoryRepository, EstadoAlertaMemoryRepository, EventosAlertaMemoryRepository } from "@/repositories/memoriaRepository";
 import type { ProveedorPrecios } from "@/services/precios/ProveedorPrecios";
-import type { Notificador } from "@/services/notificaciones/Notificador";
 
 class ProveedorFalso implements ProveedorPrecios {
-  async obtenerPrecio(): Promise<number> {
-    return 210;
-  }
-}
+  constructor(private readonly precio = 210) {}
 
-class NotificadorFalso implements Notificador {
-  async enviar(): Promise<void> {
-    return;
+  async obtenerPrecio(): Promise<number> {
+    return this.precio;
   }
 }
 
 describe("job: revisión de alertas", () => {
-  it("dispara solo cuando se cruza el objetivo y guarda el evento", async () => {
+  it("envía una actualización aunque el precio todavía no alcance el objetivo", async () => {
     const activosRepo = new ActivosMemoryRepository();
     const alertasRepo = new AlertasMemoryRepository();
     const eventosRepo = new EventosAlertaMemoryRepository();
     const estadoRepo = new EstadoAlertaMemoryRepository();
+    const mensajes: string[] = [];
 
     const activo: Activo = {
       id: "nvda",
@@ -48,23 +44,32 @@ describe("job: revisión de alertas", () => {
       alertas: alertasRepo,
       eventos: eventosRepo,
       estado: estadoRepo,
-      proveedorPrecios: new ProveedorFalso(),
-      notificador: new NotificadorFalso(),
+      proveedorPrecios: new ProveedorFalso(211),
+      notificador: {
+        async enviar(mensaje: string): Promise<void> {
+          mensajes.push(mensaje);
+        },
+      },
+      estadoInicial: [],
       persistirEstado: false,
     });
 
     expect(resultado.alertasRevisadas).toBe(1);
-    expect(resultado.disparadas).toBe(0);
+    expect(resultado.notificacionesEnviadas).toBe(1);
 
     const eventos = await eventosRepo.obtenerEventos();
-    expect(eventos).toHaveLength(0);
+    expect(eventos).toHaveLength(1);
+    expect(mensajes).toHaveLength(1);
+    expect(mensajes[0]).toBe(
+      "Actualización de NVIDIA (NVDA). Precio actual: 211. Objetivo menor_igual 210: objetivo aún no alcanzado.",
+    );
 
     const estado = await estadoRepo.obtenerEstado(alerta.id);
-    expect(estado?.ultimoPrecio).toBe(210);
-    expect(estado?.condicionCumplida).toBe(true);
+    expect(estado?.ultimoPrecio).toBe(211);
+    expect(estado?.condicionCumplida).toBe(false);
   });
 
-  it("envía una notificación cuando el precio cruza el objetivo", async () => {
+  it("envía una nueva actualización en cada revisión, aunque el precio siga sobre el objetivo", async () => {
     const activosRepo = new ActivosMemoryRepository();
     const alertasRepo = new AlertasMemoryRepository();
     const eventosRepo = new EventosAlertaMemoryRepository();
@@ -88,30 +93,30 @@ describe("job: revisión de alertas", () => {
 
     await activosRepo.guardarActivo(activo);
     await alertasRepo.guardarAlerta(alerta);
-    await estadoRepo.guardarEstado({
-      alertaId: alerta.id,
-      ultimoPrecio: 211,
-      condicionCumplida: false,
-    });
-
-    const resultado = await revisarAlertas({
+    const deps = {
       activos: activosRepo,
       alertas: alertasRepo,
       eventos: eventosRepo,
       estado: estadoRepo,
-      proveedorPrecios: new ProveedorFalso(),
+      proveedorPrecios: new ProveedorFalso(211),
       notificador: {
         async enviar(mensaje: string): Promise<void> {
           mensajes.push(mensaje);
         },
       },
+      estadoInicial: [],
       persistirEstado: false,
-    });
+    };
 
-    expect(resultado.disparadas).toBe(1);
-    expect(mensajes).toEqual([
-      "NVIDIA (NVDA) activó la alerta menor_igual 210. Precio actual: 210.",
-    ]);
-    expect(await eventosRepo.obtenerEventos()).toHaveLength(1);
+    const primeraRevision = await revisarAlertas(deps);
+    const segundaRevision = await revisarAlertas(deps);
+
+    expect(primeraRevision.notificacionesEnviadas).toBe(1);
+    expect(segundaRevision.notificacionesEnviadas).toBe(1);
+    expect(mensajes).toHaveLength(2);
+    expect(mensajes[0]).toBe(
+      "Actualización de NVIDIA (NVDA). Precio actual: 211. Objetivo menor_igual 210: objetivo aún no alcanzado.",
+    );
+    expect(await eventosRepo.obtenerEventos()).toHaveLength(2);
   });
 });

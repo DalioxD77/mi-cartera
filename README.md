@@ -9,6 +9,7 @@ Mi Cartera es una app personal de seguimiento de inversiones para acciones y cri
 - Repositorios para compra, activos, alertas y eventos.
 - Proveedores de precios con caché y validación.
 - Ruta interna `GET /api/precios` para consultar símbolos del servidor.
+- Cotizaciones de acciones con precio actual, variación diaria y moneda.
 - Job de alertas con revisión periódica.
 - Ejemplos de pruebas con Vitest.
 
@@ -51,7 +52,11 @@ RATE_LIMIT_MAX_REQUESTS=30
    - Conserva `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` ya configurados.
 6. Para alojar la web, configura `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en las variables de entorno del proveedor de despliegue y vuelve a desplegar.
 
-El workflow **Revisar alertas** consulta las alertas activas de ese usuario, obtiene precios, conserva el último precio en Supabase y manda Telegram cuando detecta un cruce. Su primera revisión guarda el precio de referencia; las siguientes pueden detectar el cruce. Se ejecuta cada 15 minutos y también se puede iniciar manualmente en **Actions**.
+El workflow **Revisar alertas** consulta las alertas activas de ese usuario, obtiene precios y guarda el último estado en Supabase. En cada ejecución manda una actualización por Telegram con el precio actual y si ya se alcanzó el objetivo, tanto si está por debajo como si está por encima. El workflow está programado cada 15 minutos y también se puede iniciar manualmente en **Actions**; GitHub puede retrasar la hora exacta de inicio.
+
+### Cotizaciones de acciones
+
+El dashboard consulta `GET /api/precios?tipo=accion&formato=cotizacion&simbolos=NVDA` desde el servidor y muestra el precio, el cambio absoluto y porcentual respecto al cierre anterior, la moneda y la hora de cotización. Las respuestas de precios existentes (`tipo=accion` o `tipo=crypto` sin `formato=cotizacion`) conservan el formato numérico anterior para las alertas. La fuente actual es el endpoint de gráficos de Yahoo Finance; no requiere una clave configurada, pero puede aplicar límites de uso y las cotizaciones pueden tener retraso.
 
 ### Configurar Telegram
 

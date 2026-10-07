@@ -58,12 +58,12 @@ async function demostrarAlertaTelegram(): Promise<void> {
     persistirEstado: false,
   });
 
-  if (resultado.disparadas !== 1) {
-    throw new Error(`La demostración esperaba 1 alerta disparada y obtuvo ${resultado.disparadas}.`);
+  if (resultado.notificacionesEnviadas !== 1) {
+    throw new Error(`La demostración esperaba 1 actualización enviada y obtuvo ${resultado.notificacionesEnviadas}.`);
   }
 
-  console.log("Demostración completada: la alerta de ejemplo cruzó el objetivo y se envió a Telegram.");
-  console.log("Precio previo simulado: 211 USD; objetivo: 210 USD; precio actual simulado: 209.5 USD.");
+  console.log("Demostración completada: la actualización de precio se envió a Telegram.");
+  console.log("Objetivo: 210 USD; precio actual simulado: 209.5 USD.");
 }
 
 if (process.argv[1]?.endsWith("demostrar-alerta-telegram.ts") ?? false) {

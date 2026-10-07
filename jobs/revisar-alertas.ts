@@ -67,15 +67,16 @@ function guardarEstadoPersistente(estados: EstadoAlerta[]): void {
   writeFileSync(archivo, JSON.stringify(estados, null, 2), "utf8");
 }
 
-function construirMensaje(alerta: Alerta, activo: Activo, precio: number): string {
-  return `${activo.nombre} (${activo.simbolo}) activó la alerta ${alerta.condicion} ${alerta.precioObjetivo}. Precio actual: ${precio}.`;
+function construirMensaje(alerta: Alerta, activo: Activo, precio: number, condicionCumplida: boolean): string {
+  const estado = condicionCumplida ? "objetivo alcanzado" : "objetivo aún no alcanzado";
+  return `Actualización de ${activo.nombre} (${activo.simbolo}). Precio actual: ${precio}. Objetivo ${alerta.condicion} ${alerta.precioObjetivo}: ${estado}.`;
 }
 
-export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alertasRevisadas: number; disparadas: number }> {
+export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alertasRevisadas: number; notificacionesEnviadas: number }> {
   const alertasActivas = await deps.alertas.obtenerAlertasActivas();
   const activos = await deps.activos.obtenerActivos();
   const estadoPersistente = deps.estadoInicial ?? leerEstadoPersistente();
-  let disparadas = 0;
+  let notificacionesEnviadas = 0;
 
   for (const alerta of alertasActivas) {
     const activo = activos.find((item) => item.id === alerta.activoId);
@@ -85,29 +86,21 @@ export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alerta
     }
 
     const precioActual = await deps.proveedorPrecios.obtenerPrecio(activo.simbolo, activo.tipo);
-    const estadoPrevio =
-      estadoPersistente.find((item) => item.alertaId === alerta.id) ??
-      await deps.estado.obtenerEstado(alerta.id);
-    const precioAnterior = estadoPrevio?.ultimoPrecio;
-    const condicionAnterior = precioAnterior !== undefined ? evaluarCondicion(alerta, precioAnterior) : false;
     const condicionActual = evaluarCondicion(alerta, precioActual);
-    const cruceDetectado = condicionActual && !condicionAnterior && precioAnterior !== undefined;
 
-    if (cruceDetectado) {
-      const mensaje = construirMensaje(alerta, activo, precioActual);
-      await deps.notificador.enviar(mensaje);
+    const mensaje = construirMensaje(alerta, activo, precioActual, condicionActual);
+    await deps.notificador.enviar(mensaje);
 
-      const evento: EventoAlerta = {
-        id: randomUUID(),
-        alertaId: alerta.id,
-        fecha: new Date().toISOString(),
-        precioAlDisparar: precioActual,
-        mensaje,
-      };
+    const evento: EventoAlerta = {
+      id: randomUUID(),
+      alertaId: alerta.id,
+      fecha: new Date().toISOString(),
+      precioAlDisparar: precioActual,
+      mensaje,
+    };
 
-      await deps.eventos.guardarEvento(evento);
-      disparadas += 1;
-    }
+    await deps.eventos.guardarEvento(evento);
+    notificacionesEnviadas += 1;
 
     const siguienteEstado: EstadoAlerta = {
       alertaId: alerta.id,
@@ -126,7 +119,7 @@ export async function revisarAlertas(deps: RevisarAlertasDeps): Promise<{ alerta
 
   return {
     alertasRevisadas: alertasActivas.length,
-    disparadas,
+    notificacionesEnviadas,
   };
 }
 
@@ -155,7 +148,7 @@ if (process.argv[1]?.endsWith("revisar-alertas.ts") ?? false) {
 
   revisarAlertas(deps)
     .then((resultado) => {
-      console.log(`Alertas revisadas: ${resultado.alertasRevisadas}; disparadas: ${resultado.disparadas}`);
+      console.log(`Alertas revisadas: ${resultado.alertasRevisadas}; notificaciones enviadas: ${resultado.notificacionesEnviadas}`);
     })
     .catch((error: Error) => {
       console.error("Error al revisar alertas:", error.message);
