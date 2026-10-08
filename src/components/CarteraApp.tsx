@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 
 import type { Activo, Alerta, CondicionAlerta, EventoAlerta, TipoActivo } from "@/domain/tipos";
 import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import WelcomeScreen from "@/components/WelcomeScreen";
 
 interface AlertaRow {
   id: string;
@@ -39,6 +40,7 @@ export default function CarteraApp() {
   const [usuario, setUsuario] = useState<User | null>(null);
   const [sesionLista, setSesionLista] = useState(false);
   const sesionComprobada = !supabase || sesionLista;
+  const [inicioIniciado, setInicioIniciado] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState("");
@@ -65,6 +67,9 @@ export default function CarteraApp() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (activa) {
         setUsuario(session?.user ?? null);
+        if (!session?.user) {
+          setInicioIniciado(false);
+        }
         setActivos([]);
         setAlertas([]);
         setEventos([]);
@@ -334,6 +339,9 @@ export default function CarteraApp() {
   }
 
   if (!usuario) {
+    if (!inicioIniciado) {
+      return <WelcomeScreen onStart={() => setInicioIniciado(true)} />;
+    }
     return (
       <main className="min-h-screen px-6 py-12 text-slate-50">
         <section className="mx-auto max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
