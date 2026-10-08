@@ -1,4 +1,6 @@
 .page {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
@@ -6,6 +8,80 @@
   padding: 2rem 1.25rem;
   background: radial-gradient(circle at center, #f5f5f7, #e2e2e8);
   overflow-x: hidden;
+}
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #02040b;
+  animation: intro-exit 0.4s ease-in 2.6s forwards;
+}
+
+.introCanvas,
+.introShade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.introCanvas {
+  opacity: 0.85;
+}
+
+.introShade {
+  background:
+    radial-gradient(ellipse at center, transparent 10%, rgba(2, 4, 11, 0.16) 75%),
+    linear-gradient(180deg, rgba(2, 4, 11, 0.05), rgba(2, 4, 11, 0.6));
+}
+
+.introContent {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+  animation: intro-arrive 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.introEyebrow {
+  color: rgba(165, 243, 252, 0.8);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.42em;
+}
+
+.introTitle {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(3.5rem, 12vw, 7rem);
+  font-weight: 700;
+  letter-spacing: -0.075em;
+  line-height: 1;
+  text-shadow: 0 0 45px rgba(34, 211, 238, 0.5);
+}
+
+.introLoader {
+  width: 3rem;
+  height: 2px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.24);
+}
+
+.introLoader::after {
+  display: block;
+  width: 45%;
+  height: 100%;
+  background: #67e8f9;
+  box-shadow: 0 0 12px rgba(103, 232, 249, 0.9);
+  content: "";
+  animation: intro-progress 1.2s ease-in-out infinite;
 }
 
 .hero {
@@ -183,9 +259,50 @@
   }
 }
 
+@keyframes intro-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes intro-progress {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(230%);
+  }
+}
+
+@keyframes intro-exit {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero {
     animation: none;
+  }
+
+  .intro {
+    animation-duration: 0.01ms;
+    animation-delay: 2.99s;
+  }
+
+  .introContent {
+    animation: none;
+  }
+
+  .introLoader::after {
+    animation: none;
+    transform: translateX(60%);
   }
 
   .button,
